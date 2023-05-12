@@ -91,21 +91,23 @@ group_summary <- function(df, exp_var, resp_var){
 stats_summary(port_df, G3)
 ```
 
-
 ```{r}
 port_df %>%
   ggplot(aes(x = studytime, y = G3, color = famrel)) +
   geom_point() +
   labs(y = "Final Grade")
 ```
+
 Presumption might lead us to think that those who spend more time studying would get higher grades, but we can see there seems to be (direct or obvious) correlation/trend between an increase in study time and an increase in grade performance.
 
 ```{r}
 group_summary(port_df, failures, G3)
 ```
-Unsurprisingly, it seems that there is a trend that students who have failed classes before tend to score lower overall. It seems that there is a steep drop off in average grade just after the first level of the failure variable - those who have failed at least one class have significantly lower summary statistics than those who have never failed a class before. 
+
+Unsurprisingly, it seems that there is a trend that students who have failed classes before tend to score lower overall. It seems that there is a steep drop off in average grade just after the first level of the failure variable - those who have failed at least one class have significantly lower summary statistics than those who have never failed a class before.
 
 All of the variables in question are categorical; I am going to create a new column which is the letter grade version of G3.
+
 ```{r}
 #converting G3
 port_df <- port_df %>%
@@ -124,8 +126,8 @@ port_df %>%
   geom_histogram(color = "steelblue", stat = "count")
 
 ```
-We can see that the vast majority of the students at this school did not perform well. 
 
+We can see that the vast majority of the students at this school did not perform well.
 
 ```{r}
 #converting all columns to factor data type, then converting absences and G3 back to numeric
@@ -136,8 +138,10 @@ port_df <- port_df %>%
 port_df <- port_df %>%
   mutate(G3 = as.numeric(G3))
 ```
+
 # Modeling
-Next, after officially converting all columns to the factor data type, we can attempt to train and fit a model.The response variable in this instance is going to be letter_grade, which means this will be a multi-nomial classification - because of this I am going to use a decision tree. 
+
+Next, after officially converting all columns to the factor data type, we can attempt to train and fit a model.The response variable in this instance is going to be letter_grade, which means this will be a multi-nomial classification - because of this I am going to use a decision tree.
 
 ```{r partitioning}
 set.seed(122)
@@ -149,7 +153,7 @@ port_test <- testing(port_split)
 
 ```{r warnings= FALSE, message=FALSE}
 #decision tree
-#excluding famsize, Medu, Fedu, traveltime, schoolsup, famsup, paid, nursery, higher, internet, health, and G3
+#excluding G3
 
 port_tree <- rpart(letter_grade ~ . -G3,
                    data = port_train,
@@ -162,7 +166,8 @@ port_tree <- rpart(letter_grade ~ . -G3,
 rpart.plot(port_tree, fallen.leaves =FALSE)
 
 ```
-## Conclusion
+
+# Conclusion
 
 We can see that the first splitting question the tree asks is whether the student has failed a class before or not, and we noted that as a helpful indicating factor in predicting school performance. The next question it asks is whether or not the student intends to pursue higher education. As the tree branches, we can see that the questions become more about their social lives - do they go out, do they have good family relations, do they have study time, that leads to more non-F predictions.
 
@@ -173,11 +178,11 @@ port_predict <- predict(port_tree, port_test, type = "class")
 ```{r}
 confusionMatrix(port_predict, port_test$letter_grade)
 ```
-We can see that this model is best at predicting the F class - this is unsurprising because it makes up about 47% of the whole sample. Additionally, the model predicted no A's, since that only made up 2% of the sample. The next steps to make a more attuned model, would be to address this class imbalance before training and fitting a model. How would the model predict if it trained on a sample that had the same proportion of each class? 
+
+We can see that this model is best at predicting the F class - this is unsurprising because it makes up about 47% of the whole sample. Additionally, the model predicted no A's, since that only made up 2% of the sample. The next steps to make a more attuned model, would be to address this class imbalance before training and fitting a model. How would the model predict if it trained on a sample that had the same proportion of each class?
 
 Although this model is not the most accurate, we can begin to gain some insight into the aspects of student life that affect school performance. Past failures being a high indicator of further poor performance tells us that those students need extra help and attention, as a past failure might psychologically hinder a student from believing they can achieve more. Additionally, we can see that the aspirations to go on to higher education is a slight indicator of performance, and is again connected to student confidence. Additionally, we can gather that students with robust social lives, students who do extracurricular activities and go out, do not perform worse than those who have more free time. With all of these in mind, we can begin to understand the needs of adolescents to encourage better school performance.
 
-```
-##### Citation
+### Citation
 
 P. Cortez and A. Silva. Using Data Mining to Predict Secondary School Student Performance. In A. Brito and J. Teixeira Eds., Proceedings of 5th Future Business Technology Conference (FUBUTEC 2008) pp. 5-12, Porto, Portugal, April, 2008, EUROSIS, ISBN 978-9077381-39-7.
