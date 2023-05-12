@@ -43,26 +43,20 @@ port_df <- port_df %>%
   select(-school, -sex, -age, -address, -Pstatus, -Mjob, -Fjob, -reason, -guardian, -G1, -G2)
 ```
 
-```{r udfs, warning = FALSE, messages = FALSE}
-#creating a function for plotting histograms
-plot_hist <- function(df, var_to_plot, course){
-  df %>%
-    ggplot(aes(x=df[[var_to_plot]])) +
-    geom_histogram(bins = 20, color = "steelblue") +
-    labs(title = str_interp("Distribution of ${as.character({{var_to_plot}})} in ${course}"),
-         x = as.character({{var_to_plot}}),
-         y = "Count")
-}
+```{r warning = FALSE, messages = FALSE}
+#the following plots to see the distribution of the variable in question
+port_df %>%
+  ggplot(aes(x = G3)) +
+  geom_histogram(bins = 20, color = "steelblue") +
+  labs(title = "Distribution of Final Grades",
+       x = "Grade (out of 20)",
+       y = "Count")
 
-#creating a function for plotting box plots
-plot_box <- function(df, var_to_plot, course){
-  df %>%
-    ggplot(aes(x=df[[var_to_plot]])) +
-    geom_boxplot(color = "steelblue") +
-    labs(title = str_interp("Distribution of ${as.character({{var_to_plot}})} in ${course}"),
-         x = as.character({{var_to_plot}}),
-         y = "Count")
-}
+port_df %>%
+  ggplot(aes(x = G3))+
+  geom_boxplot(color = "steelblue")+
+  labs(title = "Distribution of Final Grades")
+
 #creating a custom summarizing function
 stats_summary <- function(df, var){
   df %>%
@@ -83,16 +77,36 @@ group_summary <- function(df, exp_var, resp_var){
               max = max({{resp_var}}))
 }
 
-plot_hist(port_df, "G3", "Portuguese")
-plot_box(port_df, "G3", "Portuguese")
-
 stats_summary(port_df, G3)
-
-
 ```
 
-The histogram illustrates that this variable is normally distributed, albeit a bit left skewed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center). We can also see that there are a few outliers occurring in the lower end of the distribution. 
+The histogram illustrates that this variable is normally distributed, albeit a bit left skewed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center). We can also see that there are a few outliers occurring in the lower end of the distribution.
 
+```{r}
+gather_summary(port_df, failures, G3)
+```
+Unsurprisingly, it seems that there is a trend that students who have failed classes before tend to score lower overall. It seems that there is a steep drop off in average grade just after the first level of the failure variable - those who have failed at least one class have significantly lower summary statistics than those who have never failed a class before. 
+
+All of the variables in question are categorical, and I am going to convert G3 from numeric to letter grades to better capture its categorical nature, and I am going to change its name to "grade".
+```{r}
+#converting G3
+port_df <- port_df %>%
+  mutate(grade = case_when(
+    G3 >= 18 ~ "A",
+    G3 >= 16 ~ "B",
+    G3 >= 14 ~ "C",
+    G3 >= 12 ~ "D",
+    TRUE ~ "F"
+  )) %>%
+  select(-G3)
+```
+
+```{r}
+port_df %>%
+  ggplot(aes(x = grade)) +
+  geom_histogram(color = "steelblue", stat = "count")
+
+```
 
 
 ##### Citation
