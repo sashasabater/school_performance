@@ -6,7 +6,9 @@ output: pdf_document
 ---
 
 # Introduction
+
 ## What Do Students Need? Investigating High School Performance
+
 In this project, I aim to gain insight on what aspects affect a student's school performance. Specifically, this project analyzes a dataset compiled from two Portuguese high schools, and contains 33 variables that range from school performance and information to demographic and social factors. More details on this study, and how its data was compiled, can be found in this [public paper](http://www3.dsi.uminho.pt/pcortez/student.pdf). Documentation on the variables and their values can be found [here](view-source:file:///Users/user/GATEWAY/DS%20in%20R/student.txt).
 
 ```{r installations, message=FALSE}
@@ -19,33 +21,29 @@ library(tidymodels)
 ```
 
 # Exploring The Data
-The dataset is split in two - one for math scores and one for Portuguese scores.They contain all of the same variables, of which there are 33. 
+
+The dataset is split in two - one for math scores and one for Portuguese scores.They contain all of the same variables, of which there are 33. I choose to focus on just the Portuguese dataset for this project.
+
 ```{r data loading, echo=TRUE, message=FALSE, results = "hide"}
-math_df <- read_delim("student-mat.csv")
 port_df <- read_delim("student-por.csv")
-
-
-glimpse(math_df)
-glimpse(port_df)
 ```
+
 Most of the columns' data are stored as either a double or character data type, when they should in fact be categorized as factors. Many of the columns are questionnaire questions, where the student was asked to rank say, their quality of familial relationship on a scale of 1 to 5. Additionally, there are columns, like "activities" and "internet" that are answered either character strings Yes or No, meaning I should convert almost all of the columns into categorical variables before conducting any kind of classification model.
 
 However, before modeling I explore the set to gain some insights on its variables.
+
 ```{r echo=FALSE}
 colnames(port_df)
 ```
 
 I am going to exclude the following columns from analysis: school, sex, age, address, Pstatus, Mjob, Fjob, reason, guardian, G1, and G2 (please note that the variables "G1", "G2", and "G3" refer to term grades, with G1 and G2 being the students grade in the first two terms of the year, and G3 being the final grade in the course, and is scored out of 20). I am mostly interested in the categorical variables about the students' social and familial life - for example I do not wish to include whether their parents are separated or whether they have parents(which is why I am omitting the columns "Pstatus" and "guardian"), but I do want to include variables like "goout" and "famrel" which categorizes whether they go out with friends or the quality of their familial relationships respectively.
+
 ```{r}
-math_df <- math_df %>%
-  select(-school, -sex, -age, -address, -Pstatus, -Mjob, -Fjob, -reason, -guardian, -G1, -G2)
 port_df <- port_df %>%
   select(-school, -sex, -age, -address, -Pstatus, -Mjob, -Fjob, -reason, -guardian, -G1, -G2)
 ```
 
-
-
-```{r udfs}
+```{r udfs, warning = FALSE, messages = FALSE}
 #creating a function for plotting histograms
 plot_hist <- function(df, var_to_plot, course){
   df %>%
@@ -86,22 +84,17 @@ group_summary <- function(df, exp_var, resp_var){
 }
 
 plot_hist(port_df, "G3", "Portuguese")
-plot_hist(math_df, "G3", "Math")
 plot_box(port_df, "G3", "Portuguese")
-plot_box(math_df, "G3", "Math")
 
 stats_summary(port_df, G3)
-stats_summary(math_df, G3)
+
 
 ```
-The histograms for the final grades in both courses illustrate that this variable is normally distributed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center).The center of both distributions are fairly close to each other, however, there are a couple of lower bound outliers in the Portuguese course dataset. 
+
+The histogram illustrates that this variable is normally distributed, albeit a bit left skewed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center). We can also see that there are a few outliers occurring in the lower end of the distribution. 
 
 
 
+##### Citation
 
-
-
-
-###### Citation
 P. Cortez and A. Silva. Using Data Mining to Predict Secondary School Student Performance. In A. Brito and J. Teixeira Eds., Proceedings of 5th Future Business Technology Conference (FUBUTEC 2008) pp. 5-12, Porto, Portugal, April, 2008, EUROSIS, ISBN 978-9077381-39-7.
-
