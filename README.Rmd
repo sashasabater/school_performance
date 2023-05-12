@@ -164,7 +164,7 @@ rpart.plot(port_tree, fallen.leaves =FALSE)
 ```
 ## Conclusion
 
-We can see that the preliminary decision tree predicted almost no "A"s. This makes sense, since only 2% of the students received an A whereas 47% received an F. Next steps would be to address this class imbalance before training a model.
+We can see that the first splitting question the tree asks is whether the student has failed a class before or not, and we noted that as a helpful indicating factor in predicting school performance. The next question it asks is whether or not the student intends to pursue higher education. As the tree branches, we can see that the questions become more about their social lives - do they go out, do they have good family relations, do they have study time, that leads to more non-F predictions.
 
 ```{r}
 port_predict <- predict(port_tree, port_test, type = "class")
@@ -173,7 +173,9 @@ port_predict <- predict(port_tree, port_test, type = "class")
 ```{r}
 confusionMatrix(port_predict, port_test$letter_grade)
 ```
+We can see that this model is best at predicting the F class - this is unsurprising because it makes up about 47% of the whole sample. Additionally, the model predicted no A's, since that only made up 2% of the sample. The next steps to make a more attuned model, would be to address this class imbalance before training and fitting a model. How would the model predict if it trained on a sample that had the same proportion of each class? 
 
+Although this model is not the most accurate, we can begin to gain some insight into the aspects of student life that affect school performance. Past failures being a high indicator of further poor performance tells us that those students need extra help and attention, as a past failure might psychologically hinder a student from believing they can achieve more. Additionally, we can see that the aspirations to go on to higher education is a slight indicator of performance, and is again connected to student confidence. Additionally, we can gather that students with robust social lives, students who do extracurricular activities and go out, do not perform worse than those who have more free time. With all of these in mind, we can begin to understand the needs of adolescents to encourage better school performance.
 
 ```
 ##### Citation
