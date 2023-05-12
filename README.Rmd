@@ -15,6 +15,8 @@ In this project, I aim to gain insight on what aspects affect a student's school
 #first going to install and load in all necessary packages
 #install.packages("tidyverse")
 #install.packages("tidymodels")
+install.packages("rpart")
+install.packages("rpart.plot")
 library(tidyverse)
 library(tidymodels)
 
@@ -25,7 +27,7 @@ library(tidymodels)
 The dataset is split in two - one for math scores and one for Portuguese scores.They contain all of the same variables, of which there are 33. I choose to focus on just the Portuguese dataset for this project.
 
 ```{r data loading, echo=TRUE, message=FALSE, results = "hide"}
-port_df <- read_delim("student-por.csv")
+port_df <- read_delim("data/student-por.csv")
 ```
 
 Most of the columns' data are stored as either a double or character data type, when they should in fact be categorized as factors. Many of the columns are questionnaire questions, where the student was asked to rank say, their quality of familial relationship on a scale of 1 to 5. Additionally, there are columns, like "activities" and "internet" that are answered either character strings Yes or No, meaning I should convert almost all of the columns into categorical variables before conducting any kind of classification model.
@@ -43,7 +45,7 @@ port_df <- port_df %>%
   select(-school, -sex, -age, -address, -Pstatus, -Mjob, -Fjob, -reason, -guardian, -G1, -G2)
 ```
 
-```{r warning = FALSE, messages = FALSE}
+```{r warnings = FALSE, messages = FALSE}
 #the following plots to see the distribution of the variable in question
 port_df %>%
   ggplot(aes(x = G3)) +
@@ -56,7 +58,11 @@ port_df %>%
   ggplot(aes(x = G3))+
   geom_boxplot(color = "steelblue")+
   labs(title = "Distribution of Final Grades")
+```
 
+The histogram illustrates that this variable is normally distributed, albeit a bit left skewed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center). We can also see that there are a few outliers occurring in the lower end of the distribution.
+
+```{r}
 #creating a custom summarizing function
 stats_summary <- function(df, var){
   df %>%
@@ -80,34 +86,84 @@ group_summary <- function(df, exp_var, resp_var){
 stats_summary(port_df, G3)
 ```
 
-The histogram illustrates that this variable is normally distributed, albeit a bit left skewed, with a singular peak happening around the mean/median (since they are so close in valuable they can both be taken as a measure of center). We can also see that there are a few outliers occurring in the lower end of the distribution.
 
 ```{r}
-gather_summary(port_df, failures, G3)
+port_df %>%
+  ggplot(aes(x = studytime, y = G3, color = famrel)) +
+  geom_point() +
+  labs(y = "Final Grade")
+```
+Presumption might lead us to think that those who spend more time studying would get higher grades, but we can see there seems to be (direct or obvious) correlation/trend between an increase in study time and an increase in grade performance.
+
+```{r}
+group_summary(port_df, failures, G3)
 ```
 Unsurprisingly, it seems that there is a trend that students who have failed classes before tend to score lower overall. It seems that there is a steep drop off in average grade just after the first level of the failure variable - those who have failed at least one class have significantly lower summary statistics than those who have never failed a class before. 
 
-All of the variables in question are categorical, and I am going to convert G3 from numeric to letter grades to better capture its categorical nature, and I am going to change its name to "grade".
+All of the variables in question are categorical; I am going to create a new column which is the letter grade version of G3.
 ```{r}
 #converting G3
 port_df <- port_df %>%
-  mutate(grade = case_when(
+  mutate(letter_grade = case_when(
     G3 >= 18 ~ "A",
     G3 >= 16 ~ "B",
     G3 >= 14 ~ "C",
     G3 >= 12 ~ "D",
-    TRUE ~ "F"
-  )) %>%
-  select(-G3)
+    TRUE ~ "F"))
+  
 ```
 
 ```{r}
 port_df %>%
-  ggplot(aes(x = grade)) +
+  ggplot(aes(x = letter_grade)) +
   geom_histogram(color = "steelblue", stat = "count")
 
 ```
+We can see that the vast majority of the students at this school did not perform well. 
 
+
+```{r}
+#converting all columns to factor data type
+port_df <- port_df %>%
+  mutate_at(colnames(port_df), factor)
+```
+# Modeling
+Next, after officially converting all columns to the factor data type, we can attempt to fit a simple regression model.Since we have a fairly small amount of data, I am going to make use of bootstrap resampling to train the model. 
+```{r include=FALSE}
+install.packages("glmnet")
+```
+
+
+```{r partitioning}
+set.seed(122)
+#partitioning into training and split
+port_split <- initial_split(port_df, strata = letter_grade)
+port_train <- training(port_split)
+port_test <- testing(port_split)
+#bootstrapping
+port_boots <- bootstraps(port_train)
+```
+
+```{r}
+#developing regression model
+model <- multinom_reg() %>%
+  set_engine("glmnet") %>%
+  set_mode("classification")
+
+#creating workflow
+port_wf <- workflow() %>%
+  add_formula(letter_grade ~ .) %>%
+port_wf < port_wf %>%
+  add_model(model)
+
+#fitting resamples
+port_wf_results <- port_wf %>%
+  fit_resamples(resamples = port_boots,
+                control = control_resamples(save_pred=TRUE,
+                                            verbose = FALSE))
+
+
+```
 
 ##### Citation
 
