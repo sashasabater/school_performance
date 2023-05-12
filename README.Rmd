@@ -2,7 +2,9 @@
 title: "Investigating High School Student Performance"
 author: "Sasha Sabater"
 date: "05/09/23"
-output: pdf_document
+output:
+  md_document:
+    variant: markdown_github
 ---
 
 # Introduction
